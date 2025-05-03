@@ -113,6 +113,29 @@ const getUserProfile = async (req, res) => {
 //  @route  PULL /api/auth/profile
 //  @access Private (Requires JWT)
 const updateUserProfile = async (req, res) => {
+  const user = await user.findById(req.user.id);
+
+  if (!user) {
+    return res.status(401).json({ message: "User not found" });
+  }
+
+  user.name = req.body.name || user.name;
+  user.email = req.body.email || user.email;
+
+  if (req.body.password) {
+    const salt = await bcrypt.genSalt(10);
+    user.password = await bcrypt.hash(req.body.password, salt);
+  }
+
+  const UpdateUser = await user.save();
+
+  res.json({
+    _id: UpdateUser._id,
+    name: UpdateUser.name,
+    email: UpdateUser.email,
+    role: UpdateUser.role,
+    token: generateToken(UpdateUser._id),
+  });
   try {
   } catch (err) {
     res.status(500).json({ message: "Server error", error: err.message });
